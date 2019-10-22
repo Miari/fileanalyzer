@@ -1,51 +1,66 @@
 package com.boroday.fileanalyzer;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 
 public class FileAnalyzer {
-    public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            System.out.println("Two arguments should be defined");
-        } else {
-            File pathToTheFile = new File(args[0]);
-            if (!pathToTheFile.exists() || pathToTheFile.isDirectory()) {
-                System.out.println("'" + args[0] + "' file does not exist or is a directory");
-            } else {
-                System.out.println(countNumberOfSubstring(args[0], args[1]));
-                ArrayList<String> selectedStrings = getListOfSelectedStrings(args[0], args[1]);
-                for (String selectedString : selectedStrings) {
-                    System.out.println(selectedString);
-                }
-            }
-        }
+
+    public Set analyze(String pathToFile, String wordToSearch) throws IOException {
+        String text = readText(pathToFile);
+        List<String> sentences = splitSentences(text);
+        List<String> sentencesWithWord = filterByWord(sentences, wordToSearch);
+        printSentences(sentencesWithWord);
+        int count = countWordInSentences(sentencesWithWord, wordToSearch);
+        System.out.println("Word \"" + wordToSearch + "\" is present " + count + " time(s)");
+
+        Set resultOfAnalysis = new HashSet(); //дженериков нет, так как мне нужно добавить данные с разным типом для теста FileAnalyserITest
+        resultOfAnalysis.add(count);
+        resultOfAnalysis.addAll(sentencesWithWord);
+        return resultOfAnalysis;
     }
 
-    private static ArrayList<String> getListOfSelectedStrings(String pathToFile, String word) throws IOException {
-        ArrayList<String> listOfSelectedStrings = new ArrayList<>();
+    public String readText(String pathToFile) throws IOException {
+        StringBuilder text = new StringBuilder();
         String stringFromTheFile;
         try (BufferedReader fileReader = new BufferedReader(new FileReader(pathToFile))) {
             while ((stringFromTheFile = fileReader.readLine()) != null) {
-                if (stringFromTheFile.contains(word) && (stringFromTheFile.endsWith(".") || (stringFromTheFile.endsWith("!") || (stringFromTheFile.endsWith("?"))))) {
-                    listOfSelectedStrings.add(stringFromTheFile);
-                }
+                text.append(stringFromTheFile);
+                text.append("\n");
             }
-            return listOfSelectedStrings;
         }
+        return text.toString();
     }
 
-    private static int countNumberOfSubstring(String pathToFile, String word) throws IOException {
-        int count = 0;
-        try (BufferedReader fileReader = new BufferedReader(new FileReader(pathToFile))) {
-            String stringFromTheFile;
-            while ((stringFromTheFile = fileReader.readLine()) != null) {
-                int index = stringFromTheFile.indexOf(word);
-                while (index != -1) {
-                    count++;
-                    index = stringFromTheFile.indexOf(word, index + 1);
-                }
+    public List<String> splitSentences(String textToBeSplited) {
+        String[] strings = textToBeSplited.split("[.!?]");
+        return Arrays.asList(strings);
+    }
+
+    public List<String> filterByWord(List<String> sentences, String wordToSearch) {
+        List<String> filteredSentences = new ArrayList<>();
+        for (String sentence : sentences) {
+            if (sentence.contains(wordToSearch)) {
+                filteredSentences.add(sentence);
             }
-            return count;
+        }
+        return filteredSentences;
+    }
+
+    public int countWordInSentences(List<String> sentences, String wordToCount) {
+        int count = 0;
+        for (String sentence : sentences) {
+            int index = sentence.indexOf(wordToCount);
+            while (index != -1) {
+                count++;
+                index = sentence.indexOf(wordToCount, index + 1);
+            }
+        }
+        return count;
+    }
+
+    private void printSentences(List<String> sentences) {
+        for (String sentence : sentences) {
+            System.out.println(sentence);
         }
     }
 }
